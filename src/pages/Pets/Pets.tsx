@@ -6,13 +6,14 @@ import { Skeleton } from '../../components/common/Skeleton'
 import { Grid } from '../../components/layout/Grid'
 import styles from './Pets.module.css'
 import { Select } from '../../components/common/Select'
-import { Button } from '../../components/common/Button'
+import { Button, ButtonVariant } from '../../components/common/Button'
 import { filterColumns } from './Pets.constants'
-import { FormEvent } from 'react'
+import { ChangeEvent, FormEvent, useState } from 'react'
 import { GetPetsRequest } from '../../interfaces/pet'
-import { usePetList } from '../../hoots/usePetList'
+import { usePetList } from '../../hooks/usePetList'
 
 export function Pets() {
+  const [IsButtonEnabled, setIsButtonEnabled] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const urlParams = {
@@ -23,6 +24,17 @@ export function Pets() {
   }
 
   const { data, isLoading } = usePetList(urlParams)
+
+  function checkButtonStatus (event: ChangeEvent<HTMLFormElement>){
+    const { type, size, gender } = getFormValue(event.target.form)
+
+    if (
+      type !== urlParams.type ||
+      size !== urlParams.size ||
+      gender !== urlParams.gender
+    ) {setIsButtonEnabled(true)}
+    else {setIsButtonEnabled(false)}
+  }
 
   function changePage(page: number) {
     setSearchParams((params) => {
@@ -57,13 +69,14 @@ export function Pets() {
     const newSearchParams = updateSearchParams(formValues)
 
     setSearchParams(newSearchParams)
+    setIsButtonEnabled(false)
   }
 
   return (
     <Grid>
       <div className={styles.container}>
         <Header />
-        <form className={styles.filters} onSubmit={applyFilters}>
+        <form className={styles.filters} onSubmit={applyFilters} onChange={checkButtonStatus}>
           <div className={styles.columns}>
             {filterColumns.map((filter) => (
               <div key={filter.name} className={styles.column}>
@@ -76,7 +89,7 @@ export function Pets() {
               </div>
             ))}
           </div>
-          <Button type="submit">Buscar</Button>
+          <Button type="submit" variant={IsButtonEnabled ? ButtonVariant.Default : ButtonVariant.Disabled}>Buscar</Button>
         </form>
         {isLoading && (
           <Skeleton containerClassName={styles.skeleton} count={10} />
@@ -85,7 +98,7 @@ export function Pets() {
           {data?.items?.map((pet) => (
             <Card
               key={pet.id}
-              href={`/pet/${pet.id}`}
+              href={`/pets/${pet.id}`}
               text={pet.name}
               thumb={pet.photo}
             />
